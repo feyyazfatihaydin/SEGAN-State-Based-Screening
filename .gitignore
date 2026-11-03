@@ -1,0 +1,49 @@
+# SEGAN research release: exact-authorized data allowlist.
+# Include only the four validated inputs. All extra raw files are ignored.
+/data/raw/*
+!/data/raw/AMES_5Bus.xlsx
+!/data/raw/case57.m
+!/data/raw/pglib_opf_case57_ieee__sad.m
+!/data/raw/power Generation and consumption.csv
+
+# Include only the twelve validated Quick Mode MAT checkpoints.
+# Other expensive intermediate OPF scenarios, logs and publication exports
+# remain local and must NOT be pushed to the software repository.
+/outputs/*
+!/outputs/cache/
+/outputs/cache/*
+!/outputs/cache/segan_5bus_clusters.mat
+!/outputs/cache/segan_57bus_screening_ranks.mat
+!/outputs/cache/segan_57bus_single_g5_library.mat
+!/outputs/cache/segan_57bus_double_g5_g7_library.mat
+!/outputs/cache/segan_57bus_feature_manifest.mat
+!/outputs/cache/segan_57bus_cluster_manifest.mat
+!/outputs/cache/segan_57bus_single_g5_features.mat
+!/outputs/cache/segan_57bus_double_g5_g7_features.mat
+!/outputs/cache/segan_57bus_single_g5_clusters.mat
+!/outputs/cache/segan_57bus_double_g5_g7_clusters.mat
+!/outputs/cache/segan_57bus_k_sensitivity.mat
+!/outputs/cache/segan_57bus_feature_ablation.mat
+
+# Local regenerated results, test clones and release work areas.
+/quick_reproduction/
+/full_workspace/
+/FULL-TEST-SAFE-11G3/
+/FULL-TEST*/
+/SEGAN-State-Based-Screening-FULL-TEST*/
+/release_staging/
+/dist/
+
+# MATLAB/editor/platform temporary files.
+*.asv
+*.m~
+*.swp
+.DS_Store
+Thumbs.db
+
+# Never add private credentials or license secrets.
+*.lic
+*.key
+*.pem
+.env
+.env.*

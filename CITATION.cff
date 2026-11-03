@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this repository, its MATLAB code, screening methods, or results in a publication, please cite the peer-reviewed article under preferred-citation. A separate software DOI has not yet been assigned."
+type: software
+title: "SEGAN State-Based Screening: Reproducible MATLAB Code"
+authors:
+  - family-names: "Aydın"
+    given-names: "Feyyaz Fatih"
+keywords:
+  - capacity withholding
+  - nodal electricity markets
+  - DC optimal power flow
+  - MATPOWER
+  - reproducibility
+preferred-citation:
+  type: article
+  title: "Auditable State-Based Screening of Capacity-Withholding Effects in Nodal Electricity Markets"
+  authors:
+    - family-names: "Aydın"
+      given-names: "Feyyaz Fatih"
+  journal: "Sustainable Energy, Grids and Networks"
+  volume: 48
+  year: 2026
+  doi: "10.1016/j.segan.2026.102558"
+  url: "https://doi.org/10.1016/j.segan.2026.102558"

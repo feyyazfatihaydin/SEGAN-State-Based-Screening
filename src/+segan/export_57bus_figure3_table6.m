@@ -1,0 +1,316 @@
+function report = export_57bus_figure3_table6(cfg)
+%EXPORT_57BUS_FIGURE3_TABLE6 Export the published 57-bus state map and table.
+%   REPORT = SEGAN.EXPORT_57BUS_FIGURE3_TABLE6(CFG) reads only the newly
+%   computed and validated Stage 8A/8B feature and clustering checkpoints.
+%   Each 57-bus strategic configuration is independently projected onto
+%   its first two SVD-PCA components using its 28 active, standardized
+%   clustering features. Figure 3 is colored by economic state and shaped
+%   by withholding regime. The state statistics are exported as Table 6.
+%
+%   This stage runs no DC-OPF, K-means, or sensitivity calculations. It
+%   does not use historical outputs and refuses to overwrite prior exports.
+%   MATLAB Statistics and Machine Learning Toolbox is required for PCA.
+
+    if nargin ~= 1 || ~isstruct(cfg) || ~isfield(cfg,'paths') || ...
+            ~isfield(cfg.paths,'project') || ~isfield(cfg.paths,'cache')
+        error('SEGAN:Stage8CInvalidInput', ...
+            'Pass the portable configuration from reproduction_config.');
+    end
+    if exist('pca','file') ~= 2
+        error('SEGAN:Stage8CMissingToolbox', ...
+            'MATLAB Statistics and Machine Learning Toolbox is required for PCA.');
+    end
+
+    cacheRoot = cfg.paths.cache;
+    figureDir = fullfile(cfg.paths.project,'outputs','figures');
+    tableDir  = fullfile(cfg.paths.project,'outputs','tables');
+    figurePng = fullfile(figureDir,'Figure_3.png');
+    figurePdf = fullfile(figureDir,'Figure_3.pdf');
+    tableCsv  = fullfile(tableDir,'Table_6.csv');
+    tableTex  = fullfile(tableDir,'Table_6.tex');
+    destinations = {figurePng,figurePdf,tableCsv,tableTex};
+    if any(cellfun(@isfile,destinations))
+        error('SEGAN:Stage8CExistingOutput', ...
+            ['A Figure 3 or Table 6 output already exists. ' ...
+             'Review the existing files before a manual rerun.']);
+    end
+
+    manifestPath = fullfile(cacheRoot,'segan_57bus_cluster_manifest.mat');
+    featureManifestPath = fullfile(cacheRoot,'segan_57bus_feature_manifest.mat');
+    if ~isfile(manifestPath) || ~isfile(featureManifestPath)
+        error('SEGAN:Stage8CMissingManifest', ...
+            'Validated Stage 8A and Stage 8B manifests are required.');
+    end
+    s = load(manifestPath,'states');
+    f = load(featureManifestPath,'features');
+    if ~isfield(s,'states') || ~isfield(f,'features') || ...
+            ~isfield(s.states,'Validation') || ...
+            ~isfield(f.features,'Validation') || ...
+            ~s.states.Validation.AllPassed || ...
+            ~f.features.Validation.AllPassed || ...
+            s.states.Validation.Table6ChecksPassed ~= 20 || ...
+            s.states.Validation.Table7ShareChecksPassed ~= 8
+        error('SEGAN:Stage8CInvalidManifest', ...
+            'The saved feature or clustering manifests have not passed validation.');
+    end
+
+    configuration = {'Single_G5','Double_G5G7'};
+    labels = {'Single-G5','Double-G5/G7'};
+    featuresFile = { ...
+        'segan_57bus_single_g5_features.mat', ...
+        'segan_57bus_double_g5_g7_features.mat'};
+    clustersFile = { ...
+        'segan_57bus_single_g5_clusters.mat', ...
+        'segan_57bus_double_g5_g7_clusters.mat'};
+    publishedPCA = [80.5,12.2;82.6,11.4];
+    actualPCA = nan(2,2);
+    scores = cell(2,1);
+    regime = cell(2,1);
+    stateID = cell(2,1);
+    signatureCells = cell(2,1);
+
+    fprintf('\n=== SEGAN Stage 8C: Figure 3 and Table 6 export ===\n');
+    fprintf('Source: new, validated Stage 8A/8B feature and state records.\n');
+    fprintf('No DC-OPF, K-means, or historical publication outputs are used.\n');
+
+    for i = 1:2
+        featurePath = fullfile(cacheRoot,featuresFile{i});
+        clusterPath = fullfile(cacheRoot,clustersFile{i});
+        if ~isfile(featurePath) || ~isfile(clusterPath)
+            error('SEGAN:Stage8CMissingCheckpoint', ...
+                'Missing validated Stage 8A/8B checkpoint for %s.',configuration{i});
+        end
+        a = load(featurePath,'featureRecord');
+        b = load(clusterPath,'stateRecord');
+        if ~isfield(a,'featureRecord') || ~isfield(b,'stateRecord')
+            error('SEGAN:Stage8CInvalidCheckpoint', ...
+                'Missing featureRecord or stateRecord for %s.',configuration{i});
+        end
+        F = a.featureRecord;
+        S = b.stateRecord;
+        requiredSettings = {'ActiveFeatureNames','K','RNGSeed'};
+        if ~isfield(F,'Meta') || ~isfield(F,'Validation') || ...
+                ~isfield(F,'FeatureTable') || ~isfield(F,'ActiveFeatureNames') || ...
+                ~isfield(S,'Meta') || ~isfield(S,'Validation') || ...
+                ~isfield(S,'Labels') || ~isfield(S,'Settings') || ...
+                ~isfield(S,'StateSignature') || ...
+                ~all(isfield(S.Settings,requiredSettings)) || ...
+                ~strcmp(F.Meta.Stage,'8A') || ...
+                ~strcmp(S.Meta.Stage,'8B') || ...
+                ~strcmp(F.Meta.Configuration,configuration{i}) || ...
+                ~strcmp(S.Meta.Configuration,configuration{i}) || ...
+                ~F.Validation.AllPassed || ~S.Validation.InternalPassed || ...
+                ~S.Validation.PublicationTable6Passed || ...
+                ~isequal(F.ActiveFeatureNames,S.Settings.ActiveFeatureNames) || ...
+                S.Settings.K ~= 2 || S.Settings.RNGSeed ~= 20260422
+            error('SEGAN:Stage8CInvalidCheckpoint', ...
+                'The feature/clustering metadata do not match for %s.',configuration{i});
+        end
+
+        T = F.FeatureTable;
+        names = F.ActiveFeatureNames;
+        if ~istable(T) || height(T) ~= 34560 || numel(names) ~= 28 || ...
+                ~all(ismember([names,{'Regime','RowID'}], ...
+                              T.Properties.VariableNames)) || ...
+                ~isfield(S.Labels,'StateID') || ...
+                ~isfield(S.Labels,'RowID') || ...
+                numel(S.Labels.StateID) ~= 34560 || ...
+                ~isequal(T.RowID(:),S.Labels.RowID(:)) || ...
+                ~isequal(unique(double(S.Labels.StateID(:))),[1;2]) || ...
+                height(S.StateSignature) ~= 2 || ...
+                sum(S.StateSignature.Observations) ~= 34560 || ...
+                nnz(S.Labels.StateID==1) ~= S.StateSignature.Observations(1) || ...
+                nnz(S.Labels.StateID==2) ~= S.StateSignature.Observations(2)
+            error('SEGAN:Stage8CInvalidAlignment', ...
+                'The PCA rows and Stage 8B state labels are not aligned for %s.', ...
+                configuration{i});
+        end
+        regs = string(T.Regime);
+        if ~all(ismember(regs,{'CW0','ECW','FCW','CCW'})) || ...
+                numel(unique(regs)) ~= 4
+            error('SEGAN:Stage8CInvalidRegimes', ...
+                'Four withholding regimes are required for Figure 3.');
+        end
+
+        % Match the paper's PCA projection: independently standardize each
+        % configuration's 28 retained clustering features and use SVD-PCA.
+        X = T{:,names};
+        if ~isnumeric(X) || any(~isfinite(X),'all')
+            error('SEGAN:Stage8CInvalidData', ...
+                'The active PCA feature matrix contains invalid values.');
+        end
+        mu = mean(X,1);
+        sg = std(X,0,1);
+        keep = isfinite(sg) & sg > 1e-10;
+        if ~all(keep)
+            error('SEGAN:Stage8CUnexpectedZeroVariance', ...
+                'An active Stage 8B feature was unexpectedly removed by PCA.');
+        end
+        Xz = (X-mu)./sg;
+        [~,score,latent] = pca(Xz,'Algorithm','svd');
+        if size(score,2) < 2 || ~all(isfinite(latent)) || sum(latent)<=0
+            error('SEGAN:Stage8CInvalidPCA', ...
+                'Unable to compute the first two principal components.');
+        end
+        actualPCA(i,:) = (100*latent(1:2)./sum(latent)).';
+        scores{i} = score(:,1:2);
+        regime{i} = regs;
+        stateID{i} = S.Labels.StateID(:);
+        signatureCells{i} = S.StateSignature;
+        fprintf('%-12s | rows %d | PC1 %.4f%% | PC2 %.4f%%\n', ...
+            labels{i},height(T),actualPCA(i,1),actualPCA(i,2));
+        clear a b F S T X Xz score;
+    end
+
+    signature = vertcat(signatureCells{:});
+    if height(signature) ~= 4 || ...
+            ~isequal(string(signature.Configuration(:)), ...
+                ["Single_G5";"Single_G5";"Double_G5G7";"Double_G5G7"]) || ...
+            ~all(isfinite(signature{:,{'Share','MeanLMP','LMPSpread', ...
+                                      'MeanMaxLoading','StrategicNetEarningTarget'}}),'all')
+        error('SEGAN:Stage8CInvalidTable6', ...
+            'The validated state signatures cannot form Table 6.');
+    end
+
+    pcaTolerance = 0.051;
+    pcaPassed = isfinite(actualPCA) & ...
+        abs(actualPCA-publishedPCA) <= pcaTolerance;
+    fprintf('Published Figure 3 PCA checks: %d/4 (0.1%% rounding).\n', ...
+        nnz(pcaPassed));
+    fprintf('Published Table 6 checks: 20/20 (Stage 8B).\n');
+    if ~all(pcaPassed,'all')
+        warning('SEGAN:Stage8CPCADifference', ...
+            ['PCA variance differs from the published one-decimal values. ' ...
+             'The newly computed results will be exported unchanged.']);
+    end
+
+    if ~isfolder(figureDir), mkdir(figureDir); end
+    if ~isfolder(tableDir),  mkdir(tableDir);  end
+
+    fig = figure('Visible','off','Color','w', ...
+        'Position',[100 100 2050 900], ...
+        'MenuBar','none','ToolBar','none');
+    closeGuard = onCleanup(@() close(fig)); %#ok<NASGU>
+    tiles = tiledlayout(fig,1,2,'TileSpacing','compact','Padding','compact');
+    panelNames = {'(a) Single-G5','(b) Double-G5/G7'};
+    for i = 1:2
+        ax = nexttile(tiles,i);
+        hold(ax,'on');
+        grid(ax,'on');
+        box(ax,'on');
+        draw_state_regime_scatter(ax,scores{i},stateID{i},regime{i});
+        xlabel(ax,sprintf('PC 1 (%.1f%%)',actualPCA(i,1)), ...
+            'Interpreter','none','FontSize',14);
+        ylabel(ax,sprintf('PC 2 (%.1f%%)',actualPCA(i,2)), ...
+            'Interpreter','none','FontSize',14);
+        title(ax,panelNames{i},'Interpreter','none','FontSize',14, ...
+            'FontWeight','bold');
+        set(ax,'FontName','Times New Roman','FontSize',12, ...
+            'LineWidth',1.0,'GridAlpha',0.20);
+        if i==2
+            add_state_regime_legend(ax);
+        end
+    end
+    drawnow;
+    exportgraphics(fig,figurePng,'Resolution',450);
+    exportgraphics(fig,figurePdf,'ContentType','vector');
+
+    % The CSV preserves numerical precision and both config/state names.
+    writetable(signature,tableCsv);
+    write_table6_tex(signature,tableTex);
+
+    configurationColumn = string(labels(:));
+    report = struct();
+    report.Scope = 'IEEE 57-bus published Figure 3 and Table 6';
+    report.FigurePNG = figurePng;
+    report.FigurePDF = figurePdf;
+    report.TableCSV = tableCsv;
+    report.TableLaTeX = tableTex;
+    report.PCAExplainedPercent = table(configurationColumn, ...
+        actualPCA(:,1),actualPCA(:,2), ...
+        publishedPCA(:,1),publishedPCA(:,2), ...
+        pcaPassed(:,1),pcaPassed(:,2), ...
+        'VariableNames',{'Configuration','PC1','PC2', ...
+        'PublishedPC1','PublishedPC2','PC1Pass','PC2Pass'});
+    report.Table6 = signature;
+    report.Validation = struct(...
+        'TotalPCAObservations',69120, ...
+        'PCAReferenceChecksPassed',nnz(pcaPassed), ...
+        'PCAReferenceChecksTotal',4, ...
+        'Table6ChecksPassed',20, ...
+        'Table6ChecksTotal',20, ...
+        'AllPassed',all(pcaPassed,'all'));
+    fprintf('Exported outputs/figures/Figure_3.png\n');
+    fprintf('Exported outputs/figures/Figure_3.pdf\n');
+    fprintf('Exported outputs/tables/Table_6.csv\n');
+    fprintf('Exported outputs/tables/Table_6.tex\n');
+    fprintf('No DC-OPF, K-means, or Figure 1 modifications occurred.\n');
+    fprintf('=== SEGAN Stage 8C completed ===\n\n');
+end
+
+function draw_state_regime_scatter(ax,score,states,regimes)
+%DRAW_STATE_REGIME_SCATTER Encode the state by color and regime by shape.
+    colors = [0.08 0.36 0.78;0.88 0.23 0.16];
+    names = {'CW0','ECW','FCW','CCW'};
+    markers = {'o','^','s','d'};
+    for state = 1:2
+        for r = 1:4
+            select = states==state & regimes==names{r};
+            if ~any(select), continue; end
+            scatter(ax,score(select,1),score(select,2),26, ...
+                'Marker',markers{r}, ...
+                'MarkerFaceColor',colors(state,:), ...
+                'MarkerEdgeColor',[0.08 0.08 0.08], ...
+                'MarkerFaceAlpha',0.78,'MarkerEdgeAlpha',0.96, ...
+                'LineWidth',0.55,'HandleVisibility','off');
+        end
+    end
+end
+
+function add_state_regime_legend(ax)
+%ADD_STATE_REGIME_LEGEND Use neutral markers to explain shape separately.
+    a = scatter(ax,nan,nan,65,'o', ...
+        'MarkerFaceColor',[0.08 0.36 0.78], ...
+        'MarkerEdgeColor',[0.08 0.08 0.08], ...
+        'DisplayName','Moderate state');
+    b = scatter(ax,nan,nan,65,'o', ...
+        'MarkerFaceColor',[0.88 0.23 0.16], ...
+        'MarkerEdgeColor',[0.08 0.08 0.08], ...
+        'DisplayName','High-profit state');
+    c = plot(ax,nan,nan,'ko','LineStyle','none','DisplayName','CW0');
+    d = plot(ax,nan,nan,'k^','LineStyle','none','DisplayName','ECW');
+    e = plot(ax,nan,nan,'ks','LineStyle','none','DisplayName','FCW');
+    f = plot(ax,nan,nan,'kd','LineStyle','none','DisplayName','CCW');
+    legend(ax,[a b c d e f],'Location','northeast', ...
+        'NumColumns',2,'Box','on','FontSize',10,'Interpreter','none');
+end
+
+function write_table6_tex(t,fileName)
+%WRITE_TABLE6_TEX Export Table 6 with the published rounded quantities.
+    id = fopen(fileName,'w');
+    if id < 0
+        error('SEGAN:Stage8CTableWriteFailed', ...
+            'Could not create the new Table 6 LaTeX file.');
+    end
+    closeGuard = onCleanup(@() fclose(id)); %#ok<NASGU>
+    fprintf(id,'%% Generated from newly computed Stage 8B state signatures.\n');
+    fprintf(id,'%% Requires the booktabs LaTeX package.\n');
+    fprintf(id,'\\begin{tabular}{llrrrrr}\n');
+    fprintf(id,'\\toprule\n');
+    fprintf(id,['Configuration & State & Share & Mean LMP & LMP spread & ' ...
+        'Mean max loading & NE target \\\\\n']);
+    fprintf(id,[' & & & (\\$/MWh) & (\\$/MWh) & (\\%%) & (\\$/h) \\\\\n']);
+    fprintf(id,'\\midrule\n');
+    for i=1:height(t)
+        if i==3, fprintf(id,'\\addlinespace\n'); end
+        config = '';
+        if i==1, config='Single-G5'; end
+        if i==3, config='Double-G5/G7'; end
+        fprintf(id,'%s & %s & %.3f & %.3f & %.3f & %.2f & %.1f \\\\\n', ...
+            config,char(t.State(i)),t.Share(i),t.MeanLMP(i), ...
+            t.LMPSpread(i),t.MeanMaxLoading(i), ...
+            t.StrategicNetEarningTarget(i));
+    end
+    fprintf(id,'\\bottomrule\n');
+    fprintf(id,'\\end{tabular}\n');
+end
