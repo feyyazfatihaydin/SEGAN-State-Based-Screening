@@ -4,14 +4,14 @@ Research code for reproducing the numerical experiments in:
 
 > Feyyaz Fatih Aydın, "Auditable State-Based Screening of Capacity-Withholding Effects in Nodal Electricity Markets," *Sustainable Energy, Grids and Networks* (2026), article 102558. https://doi.org/10.1016/j.segan.2026.102558
 
-**Release status:** Quick reproduction (27/27 nonempty publication exports), an isolated clean-copy Full reproduction (17/17 recorded-result checks), and original/Quick/Full CSV cross-comparisons (27/27 within stated tolerance) have been completed locally. **This local Git-ready layout has NOT been publicly released.** The 4 canonical inputs and 12 Quick MAT checkpoints are now individually allowlisted for a planned bundled release; the author-owned software is now designated BSD-3-Clause; upstream-data provenance/rights review and final tracked-file review remain outstanding. A 2026-11-03 in-memory same-workstation solver probe resolved DEFAULT to GUROBI in two cases, but did not retrospectively record the historical Full solver. See [PROVENANCE.md](PROVENANCE.md) and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+**Release status (4 November 2026):** The complete 72-file repository (source code, documentation, four canonical inputs, twelve Quick Mode MAT checkpoints, and Git line-ending rules) is committed and uploaded to a **private GitHub repository**. No public GitHub release or Zenodo archive has been issued. Local verification completed: Quick reproduction generated 27/27 nonempty publication exports; an isolated Full reproduction passed 17/17 recorded-result checks; and original/Quick/Full numerical CSV comparisons passed 27/27 within stated tolerance. A fresh private GitHub clone contained all 71 files before the subsequent `.gitattributes` update; the sixteen research assets passed SHA-256 checks, allowing for Git's Windows line-ending conversion of two `.m` case files. A current-environment solver probe resolved MATPOWER `DEFAULT` to GUROBI in two cases; this is not retrospective evidence of every historical solve. Public redistribution of certain upstream inputs remains under review. See [PROVENANCE.md](PROVENANCE.md), [DATA_RELEASE_DECISIONS.md](DATA_RELEASE_DECISIONS.md), and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## Start here: bundled data and MATLAB user guide
 
-**The planned release includes the actual four raw research inputs and twelve Quick Mode MAT checkpoints**, alongside the original MATLAB code. No separate AMES or Turkey-data search is needed for ordinary Quick/Full setup, once the bundled release is approved and published. Official AMES, MATPOWER, PGLib, Kaggle and EPİAŞ links are included for **source attribution and optional independent acquisition**, not as substitutes for the supplied canonical inputs.
+**The current private repository includes the actual four raw research inputs and twelve Quick Mode MAT checkpoints**, alongside the original MATLAB code. No separate AMES or Turkey-data search is needed for ordinary Quick/Full setup, when the repository is publicly released. Official AMES, MATPOWER, PGLib, Kaggle and EPİAŞ links are included for **source attribution and optional independent acquisition**, not as substitutes for the supplied canonical inputs.
 
 - [USER_GUIDE.md](USER_GUIDE.md): end-to-end MATLAB, MATPOWER 8.1 and Gurobi setup, Quick/Full steps, verification and troubleshooting.
-- [DATA_ACQUISITION.md](DATA_ACQUISITION.md), [DATA_SOURCES.md](DATA_SOURCES.md): exact input filenames, provenance, upstream attribution, and unresolved rights notes.
+- [DATA_ACQUISITION.md](DATA_ACQUISITION.md), [DATA_SOURCES.md](DATA_SOURCES.md), [DATA_REDISTRIBUTION_NOTICE.md](DATA_REDISTRIBUTION_NOTICE.md), and [DATA_RELEASE_DECISIONS.md](DATA_RELEASE_DECISIONS.md): exact input filenames, provenance, upstream attribution, and outstanding redistribution checks.
 - `RELEASE_DATA_SHA256.tsv`: SHA-256 hashes and byte sizes of the **16 selected** raw/MAT files. A fresh clone can verify its files using this list.
 - `prepare_full_workspace.m`: safely creates a clean `full_workspace/` from the bundled code and four inputs **without copying Quick MAT checkpoints**. See Section 7 in the user guide before using Full Mode.
 
@@ -25,8 +25,7 @@ This permission does **not** automatically extend to the bundled AMES/IEEE
 case/PGLib/Turkey input data or the twelve derived Quick `.mat` checkpoints;
 those assets retain their own provenance and applicable upstream terms.
 See [DATA_SOURCES.md](DATA_SOURCES.md) and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
-before copying the dataset into a public release. No GitHub upload or release
-is implied by selecting the code license.
+before making the repository or its data publicly available. The repository is currently uploaded privately; the BSD-3-Clause software license does not itself authorize publication of third-party data.
 
 When using the research software or reproducing its results in a publication,
 **please cite the associated peer-reviewed SEGAN article** using
@@ -81,7 +80,7 @@ All paths in MATLAB code are resolved relative to the repository root. No user-s
 
 ## Four bundled inputs
 
-The planned bundled release already contains the **four exact validated inputs** in `data/raw/`, named:
+The private repository contains the **four exact validated inputs** in `data/raw/`, named:
 
 ```text
 AMES_5Bus.xlsx
@@ -136,7 +135,7 @@ quickReport = reproduce_all('quick');
 assert(quickReport.Validation.AllPassed);
 ```
 
-Quick mode regenerates Figures 2-7 and Tables 4-9 (27 publication output files counting image formats and plotting-data CSV). The original Figure 1 remains out of scope. A repeated run to an occupied Quick destination is intentionally blocked; **do not delete validated data to bypass this protection**. A public Quick distribution also requires review of whether derived MAT checkpoints can be redistributed.
+Quick mode regenerates Figures 2-7 and Tables 4-9 (27 publication output files counting image formats and plotting-data CSV). The original Figure 1 remains out of scope. A repeated run to an occupied Quick destination is intentionally blocked; **do not delete validated data to bypass this protection**. The author has approved sharing the twelve generated MAT checkpoints; any embedded third-party material must still be treated according to its applicable terms.
 
 ## Full reproduction (new, empty-output copy only)
 
@@ -161,7 +160,7 @@ disp(report.Validation);
 
 `prepare_full_workspace()` copies the four provided raw inputs and source/configuration into `full_workspace/` but **does not copy any MAT checkpoints, plots or logs**. It refuses to overwrite an existing workspace. The isolated copy then runs all 23 computational and export stages. The original root and ready-made Quick checkpoints remain unchanged. Refer to [USER_GUIDE.md](USER_GUIDE.md) for solver setup and detailed steps.
 
-A previous clean-copy Full run completed locally on 2026-11-03 and passed all 17 recorded-result checks; the cross-run comparison found all 27 numerical CSV comparisons matched within tolerance. The new `prepare_full_workspace` convenience helper must still be verified on the author's MATLAB workstation; do not equate static packaging checks with that runtime test.
+A previous clean-copy Full run completed locally on 2026-11-03 and passed all 17 recorded-result checks; the cross-run comparison found all 27 numerical CSV comparisons matched within tolerance. The helper and fresh-copy Full workflow are documented above. A separate fresh-clone Quick/Full readiness check is still recommended before the first public release; do not equate a file-count check with a runtime test.
 
 ## Interpretation and units
 
@@ -175,12 +174,14 @@ K-means cluster IDs are arbitrary; compare clusters using economic meaning, labe
 - [x] Demo completed four in-memory OPF solves; seven MATLAB tests passed locally.
 - [x] Source portability scan reported no flagged personal paths or non-ASCII MATLAB source characters.
 - [x] An isolated **fresh-copy Full reproduction** completed and passed recorded-result validation on 2026-11-03; a cross-run audit matched the nine numerical CSV files in each of the three comparisons. Preserve the full run log for the release record.
-- [ ] Select an explicit **source-code license**; no license is granted by this README.
+- [x] Apply the **BSD-3-Clause** license to author-owned software, with scope explained in [LICENSE_SCOPE.md](LICENSE_SCOPE.md).
 - [ ] Finish upstream copyright/provenance review for the four allowlisted input files; author permission does not supersede third-party terms.
 - [x] Four empty, unused MATLAB starter scaffolds were safely archived locally outside Git in Stage 11L2.
-- [x] Ignore Full test clones and all generated outputs **except** the 12 specifically allowlisted Quick MAT checkpoints; stage/commit only after the final check.
+- [x] Ignore Full test clones and all generated outputs **except** the 12 specifically allowlisted Quick MAT checkpoints; all sixteen approved-for-private-staging assets were committed to the private repository.
 - [x] Capture current-environment Gurobi selection evidence in [SOLVER_EVIDENCE.md](SOLVER_EVIDENCE.md); historical solver selection is not retrospectively proven.
-- [ ] Prepare the GitHub release and a versioned Zenodo snapshot only after clearance.
+- [x] Upload the complete source-and-data package to a **private** GitHub repository.
+- [ ] Verify a fresh clone against the final `.gitattributes` configuration and complete release-rights review.
+- [ ] Prepare a **public** GitHub release and a versioned Zenodo snapshot only after clearance.
 
 ## How to cite this research
 
