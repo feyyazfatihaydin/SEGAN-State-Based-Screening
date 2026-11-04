@@ -1,10 +1,10 @@
 # Auditable State-Based Screening of Capacity-Withholding Effects in Nodal Electricity Markets
 
-\## Complete Installation \& Reproduction Manual
+## Complete Installation & Reproduction Manual
 
 
 
-\[Download the Step-by-Step User Guide (PDF)](docs/SEGAN\_Complete\_Reproduction\_Manual.pdf)
+[Download the Step-by-Step User Guide (PDF)](docs/SEGAN_Complete_Reproduction_Manual.pdf)
 
 This manual provides step-by-step instructions for installing MATLAB, MATPOWER and Gurobi, configuring academic licensing, and reproducing the published results using Quick Mode and Full Mode.
 
