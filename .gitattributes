@@ -1,0 +1,7 @@
+# Preserve exact bytes of canonical research inputs
+/data/raw/case57.m -text
+/data/raw/pglib_opf_case57_ieee__sad.m -text
+
+# Preserve binary research assets
+*.mat binary
+*.xlsx binary
